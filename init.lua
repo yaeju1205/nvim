@@ -7,6 +7,7 @@ local env = vim.env
 local schedule = vim.schedule
 local system = vim.system
 local log = vim.log
+local lsp = vim.lsp
 local notify = vim.notify
 local tbl_extend = vim.tbl_extend
 --- @diagnostic enable
@@ -134,6 +135,9 @@ keymap('v', '>', '>gv', opts)
 
 -- Terminal Mode Exit
 keymap('t', '<ESC>', [[<C-\><C-n>]], opts)
+
+-- Expolrer
+keymap('n', '<leader>e', "<cmd>Ex<cr>")
 
 --- @class PluginManager
 --- @field plugins_directory string
@@ -421,11 +425,156 @@ function plugins.delete(plugin)
     end
 end
 
-plugins.install("nvim-lua/plenary.nvim")()
-
-plugins.install("nvim-tree/nvim-web-devicons")()
+plugins.install_sync("nvim-lua/plenary.nvim")
 
 plugins.install("cranberry-clockworks/coal.nvim")(function()
     cmd("syntax on")
     vim.cmd("colorscheme coal")
+end)
+
+plugins.install("saghen/blink.cmp", {
+    version = "v1.9.1",
+})(function()
+    require("blink.cmp").setup({
+        keymap = {
+            preset = "none",
+            ["<CR>"] = { "accept", "fallback" },
+            ["<Tab>"] = {
+                "select_next",
+                "accept",
+                "fallback",
+            },
+            ["<S-Tab>"] = {
+                "select_prev",
+                "fallback",
+            },
+        },
+
+        completion = {
+            menu = {
+                border = "none",
+                winblend = 0,
+                scrollbar = true,
+                draw = {
+                    padding = 0,
+                    gap = 1,
+                    columns = {
+                        { "kind_icon" },
+                        { "label" }
+                    }
+                }
+            },
+            documentation = {
+                auto_show = true,
+                auto_show_delay_ms = 300,
+            },
+            list = {
+                selection = {
+                    preselect = false,
+                },
+            },
+        },
+
+        cmdline = {
+            enabled = true,
+            keymap = {
+                preset = "cmdline",
+                ["<Right>"] = false,
+                ["<Left>"] = false,
+            },
+            completion = {
+                list = {
+                    selection = {
+                        preselect = false
+                    }
+                },
+                menu = {
+                    auto_show = true,
+                },
+                ghost_text = {
+                    enabled = true
+                },
+            },
+        },
+
+        appearance = {
+            kind_icons = {
+                Text = "",
+                Method = "",
+                Function = "",
+                Constructor = "",
+                Field = "",
+                Variable = "",
+                Class = "",
+                Interface = "",
+                Module = "",
+                Property = "",
+                Unit = "",
+                Value = "",
+                Enum = "",
+                Keyword = "",
+                Snippet = "",
+                Color = "",
+                File = "",
+                Reference = "",
+                Folder = "",
+                EnumMember = "",
+                Constant = "",
+                Struct = "",
+                Event = "",
+                Operator = "",
+                TypeParameter = "",
+            },
+            nerd_font_variant = "mono",
+        },
+
+        signature = {
+            enabled = true,
+        },
+
+        sources = {
+            default = { "lsp" }
+        },
+    })
+end)
+
+lsp.servers = {
+    "lua_ls",
+    "clangd",
+}
+
+plugins.install("mason-org/mason.nvim")(function()
+    require("mason").setup()
+end)
+
+plugins.install("neovim/nvim-lspconfig")(function()
+    lsp.config("*", {
+        capabilities = require("blink.cmp").get_lsp_capabilities(),
+    })
+    lsp.enable(lsp.servers)
+    api.nvim_create_autocmd("LspAttach", {
+        callback = function(args)
+            local client = lsp.get_client_by_id(args.data.client_id)
+
+            if not client then
+                return
+            end
+
+            if client.server_capabilities.semanticTokensProvider then
+                client.server_capabilities.semanticTokensProvider = nil
+            end
+
+            if client.server_capabilities.documentHighlightProvider then
+                api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+                    buffer = args.buf,
+                    callback = lsp.buf.document_highlight,
+                })
+
+                api.nvim_create_autocmd({ "CursorMoved", "InsertEnter" }, {
+                    buffer = args.buf,
+                    callback = lsp.buf.clear_references,
+                })
+            end
+        end,
+    })
 end)
