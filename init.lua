@@ -429,7 +429,27 @@ plugins.install_sync("nvim-lua/plenary.nvim")
 
 plugins.install("cranberry-clockworks/coal.nvim")(function()
     cmd("syntax on")
-    vim.cmd("colorscheme coal")
+    cmd("colorscheme coal")
+end)
+
+plugins.install("lewis6991/satellite.nvim")(function()
+    require("satellite").setup({
+        current_only = false,
+        winblend = 0,
+        handlers = {
+            marks = {
+                enable = false,
+            },
+            gitsigns = {
+                enable = true,
+                signs = {
+                    add = "│",
+                    change = "│",
+                    delete = "│",
+                },
+            },
+        },
+    })
 end)
 
 plugins.install("saghen/blink.cmp", {
