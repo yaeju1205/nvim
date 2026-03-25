@@ -559,8 +559,7 @@ plugins.install("saghen/blink.cmp", {
 end)
 
 lsp.servers = {
-    "lua_ls",
-    "clangd",
+    lua_ls = {},
 }
 
 plugins.install("mason-org/mason.nvim")(function()
@@ -571,7 +570,10 @@ plugins.install("neovim/nvim-lspconfig")(function()
     lsp.config("*", {
         capabilities = require("blink.cmp").get_lsp_capabilities(),
     })
-    lsp.enable(lsp.servers)
+    for server, options in pairs(lsp.servers) do
+        lsp.config(server, options)
+        lsp.enable(server)
+    end
     api.nvim_create_autocmd("LspAttach", {
         callback = function(args)
             local client = lsp.get_client_by_id(args.data.client_id)
@@ -597,4 +599,8 @@ plugins.install("neovim/nvim-lspconfig")(function()
             end
         end,
     })
+end)
+
+plugins.install("yaeju1205/warp.nvim")(function()
+    require("warp").setup()
 end)
