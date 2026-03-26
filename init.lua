@@ -427,9 +427,13 @@ end
 
 plugins.install_sync("nvim-lua/plenary.nvim")
 
-plugins.install("cranberry-clockworks/coal.nvim")(function()
+plugins.install("yaeju1205/sakura.nvim", {
+    requires = {
+        { origin = "rktjmp/lush.nvim" }
+    }
+})(function()
     cmd("syntax on")
-    cmd("colorscheme coal")
+    cmd("colorscheme sakura")
 end)
 
 plugins.install("lewis6991/satellite.nvim")(function()
