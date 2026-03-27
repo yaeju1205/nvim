@@ -1,6 +1,7 @@
 --- @diagnostic disable
 local api = vim.api
 local cmd = vim.cmd
+local diagnostic = vim.diagnostic
 local fn = vim.fn
 local opt = vim.opt
 local env = vim.env
@@ -456,7 +457,9 @@ plugins.install("lewis6991/gitsigns.nvim")(function()
         },
     })
 end)
+
 plugins.install("lewis6991/satellite.nvim")(function()
+    --- @diagnostic disable
     require("satellite").setup({
         current_only = false,
         winblend = 0,
@@ -474,11 +477,16 @@ plugins.install("lewis6991/satellite.nvim")(function()
             },
         },
     })
+    --- @diagnostic enable
 end)
 
 plugins.install("saghen/blink.cmp", {
     version = "v1.9.1",
+    requires = {
+        { origin = "folke/lazydev.nvim" },
+    },
 })(function()
+    require("lazydev").setup({})
     require("blink.cmp").setup({
         keymap = {
             preset = "none",
@@ -577,7 +585,14 @@ plugins.install("saghen/blink.cmp", {
         },
 
         sources = {
-            default = { "lsp" }
+            default = { "lazydev", "lsp" },
+            providers = {
+                lazydev = {
+                    name = "LazyDev",
+                    module = "lazydev.integrations.blink",
+                    score_offset = 100,
+                },
+            },
         },
     })
 end)
@@ -628,3 +643,9 @@ end)
 plugins.install("yaeju1205/warp.nvim")(function()
     require("warp").setup()
 end)
+
+api.nvim_create_autocmd("CursorHold", {
+    callback = function()
+        diagnostic.open_float(nil, { focus = false })
+    end
+})
