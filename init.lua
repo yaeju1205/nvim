@@ -119,6 +119,10 @@ keymap.set('n', '<A-j>',     ':wincmd j<CR>', vim_default_keymap_opts)
 keymap.set('n', '<A-<>', '<C-w><', vim_default_keymap_opts)
 keymap.set('n', '<A->>', '<C-w>>', vim_default_keymap_opts)
 
+-- Window Split
+keymap.set('n', '\\', "<cmd>spl<cr>", vim_default_keymap_opts)
+keymap.set('n', '|', "<cmd>vs<cr>", vim_default_keymap_opts)
+
 -- Navigation Shortcuts
 keymap.set('n', '<C-Right>', 'w', vim_default_keymap_opts)
 keymap.set('n', '<C-Left>',  'b', vim_default_keymap_opts)
