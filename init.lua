@@ -1,22 +1,19 @@
 local vim_default_keymap_opts = { silent = true }
 local vim_use_lsp = true
-local vim_lsp_servers = { "lua_ls", "clangd", "c3_lsp" }
+local vim_lsp_servers = { "lua_ls", "clangd", "rust_analyzer" }
 local vim_use_cmp = true
 local vim_use_git = true
+local vim_use_dev_icon = true
+local vim_use_nvim_tree = true
+local vim_use_finder = true
 
 local api = vim.api
 local cmd = vim.cmd
 local diagnostic = vim.diagnostic
 local fn = vim.fn
 local opt = vim.opt
-local env = vim.env
 local keymap = vim.keymap
-local schedule = vim.schedule
-local system = vim.system
-local log = vim.log
 local lsp = vim.lsp
-local notify = vim.notify
-local tbl_extend = vim.tbl_extend
 
 vim.loader.enable()
 
@@ -221,6 +218,10 @@ plugins.install("yaeju1205/warp.nvim")(function()
     require("warp").setup()
 end)
 
+plugins.install("windwp/nvim-autopairs")(function()
+    require("nvim-autopairs").setup()
+end)
+
 if vim_use_cmp then
     plugins.install("saghen/blink.cmp", {
         version = "v1.9.1",
@@ -376,10 +377,22 @@ if vim_use_lsp then
             end,
         })
     end)
+
+    vim.api.nvim_create_autocmd("BufWritePre", {
+        pattern = "*.rs",
+        callback = function()
+            lsp.buf.format { async = false }
+        end,
+    })
 end
 
 plugins.install("lewis6991/hover.nvim")(function()
-    require('hover').config({})
+    require('hover').config({
+        preview_opts = {
+            border = 'single'
+        },
+        preview_window = true,
+    })
 
     vim.keymap.set('n', 'K', function()
         require('hover').open()
@@ -404,6 +417,40 @@ plugins.install("lewis6991/hover.nvim")(function()
     vim.o.mousemoveevent = true
 end)
 
+if vim_use_dev_icon then
+    plugins.install("nvim-tree/nvim-web-devicons")(function() end)
+end
+
+if vim_use_nvim_tree then
+    plugins.install("nvim-tree/nvim-tree.lua")(function()
+        require("nvim-tree").setup({
+            sort = {
+                sorter = "suffix",
+            },
+            view = {
+                width = 25,
+            }
+        })
+        keymap.del("n", "<leader>e")
+        keymap.set("n", "<leader>e", require("nvim-tree.api").tree.toggle)
+    end)
+end
+
+if vim_use_finder then
+    if fn.executable("rg") == 1 then
+        vim.opt.grepprg = "rg --vimgrep --smart-case --column"
+        vim.opt.grepformat = "%f:%l:%c:%m"
+    end
+
+    if fn.executable("fzf") == 1 then
+        plugins.install("ibhagwan/fzf-lua")(function()
+            local fzf_lua = require("fzf-lua")
+            keymap.set("n", "<leader>fg", fzf_lua.live_grep, { desc = "FZF Live Grep" })
+            keymap.set("n", "<leader>ff", fzf_lua.files, { desc = "FZF Files" })
+       end)
+    end
+end
+
 plugins.install("yaeju1205/sakura.nvim", {
     requires = {
         { origin = "rktjmp/lush.nvim" }
@@ -422,4 +469,11 @@ api.nvim_create_autocmd("CursorHold", {
     callback = function()
         diagnostic.open_float(nil, { focus = false })
     end
+})
+
+diagnostic.config({
+    underline = true,
+    virtual_text = false,
+    signs = true,
+    severity_sort = true,
 })
